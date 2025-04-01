@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Импорт товаров</title>
+</head>
+
+<body>
+
+<div class="form-container" id="postForm">
+    <h2>Добавить пост</h2>
+
+    <form th:action="@{/admin/import}" method="POST" th:object="${post}" enctype="multipart/form-data">
+
+        <label for="file">Выберите файл:</label>
+        <input type="file" id="file" name="file" accept=".csv" class="form-control-file" required="true">
+        <button type="submit">Загрузить</button>
+    </form>
+</div>
+</body>
+</html>
