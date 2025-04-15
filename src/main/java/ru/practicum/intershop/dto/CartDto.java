@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class CartDto {
-    private int id;
+    private Long id;
     private List<CartItemDto> items = new ArrayList<>();
 
     public boolean isEmpty() {

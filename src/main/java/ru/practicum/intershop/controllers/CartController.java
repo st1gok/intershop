@@ -1,11 +1,15 @@
 package ru.practicum.intershop.controllers;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.intershop.dto.CartDto;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 import ru.practicum.intershop.services.CartService;
 
+import java.net.URI;
 import java.util.Optional;
 
 @Controller
@@ -19,24 +23,26 @@ public class CartController {
     }
 
     @GetMapping("/items")
-    public String getCartPage(Model model, @CookieValue(defaultValue = "0") Long cartId) {
-        CartDto cartDto = cartService.getCart(cartId);
-        model.addAttribute("cart", cartDto);
-        return "cart";
+    public Mono<String> getCartPage(Model model, @CookieValue(defaultValue = "0") Long cartId) {
+        return cartService.getCart(cartId)
+                .doOnNext(cart -> model.addAttribute("cart", cart))
+                .map(cart -> "cart");
     }
 
     @PostMapping("/buy")
-    public String buyCart( @CookieValue(defaultValue = "0") Long cartId) {
-        Long orderId = cartService.buy(cartId);
-        return "redirect:/orders/" + orderId;
+    public Mono<ResponseEntity<Void>> buyCart( @CookieValue(defaultValue = "0") Long cartId) {
+       return cartService.buy(cartId).flatMap(orderId -> Mono.just(ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("/orders/" + orderId))
+                .build()));
     }
 
 
     @PostMapping("/items/{id}")
-    public String postItem(@PathVariable long id, @ModelAttribute("action") Action action, @CookieValue(defaultValue = "0") Long cartId, @RequestHeader("referer") Optional<String> referer, Model model) {
-        cartService.changeCart(cartId, action, id);
-        String refererUrl = referer.orElse("/main/items");
-        return "redirect:" + refererUrl;
+    public Mono<ResponseEntity<Void>> postItem(@PathVariable long id, ServerWebExchange exchange, @CookieValue(defaultValue = "0") Long cartId, @RequestHeader("referer") Optional<String> referer, Model model) {
+        return exchange.getFormData().flatMap((form) -> cartService.changeCart(cartId, Action.valueOf(form.getFirst("action")), id)).then(
+                Mono.just(ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(referer.orElse("/main/items")))
+                    .build()));
     }
 
     public enum Action {

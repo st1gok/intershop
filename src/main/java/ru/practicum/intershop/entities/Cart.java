@@ -1,20 +1,19 @@
 package ru.practicum.intershop.entities;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
 @Table(name = "carts")
 @Data
 public class Cart {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ElementCollection(targetClass=CartItem.class,fetch= FetchType.LAZY)
-    @CollectionTable(name="cart_items",joinColumns=@JoinColumn(name="cart_id"))
+    @Transient
     private List<CartItem> items = new ArrayList<>();
 }

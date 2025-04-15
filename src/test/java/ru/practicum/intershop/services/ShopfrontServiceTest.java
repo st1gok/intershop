@@ -1,35 +1,49 @@
 package ru.practicum.intershop.services;
 
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.context.jdbc.Sql;
 import ru.practicum.intershop.dto.ItemsWithCartDto;
+import ru.practicum.intershop.entities.Product;
+import ru.practicum.intershop.repositories.ProductRepository;
 
-@SpringBootTest
-@Transactional
+import java.util.Arrays;
+
+@SpringBootTest()
+@AutoConfigureWebTestClient
 class ShopfrontServiceTest {
 
     @Autowired
     ShopfrontService shopfrontService;
 
+    @Autowired
+    ProductRepository productRepository;
+
+    @BeforeEach
+    void setUp() {
+        productRepository.deleteAll().subscribe();
+    }
+
     @Test
-    @Sql(statements = "insert into products(title, price) values('test', 1)")
     void testShopfrontPage() {
-        ItemsWithCartDto shopfrontPage = shopfrontService.getShopfrontPageWithCart(PageRequest.of(0,10, Sort.unsorted()), 0, "");
+        productRepository.save(Product.builder().title("test").price(1d).build()).subscribe();
+        ItemsWithCartDto shopfrontPage = shopfrontService.getShopfrontPageWithCart(PageRequest.of(0,10, Sort.unsorted()), 0, "").block();
         Assertions.assertEquals(1, shopfrontPage.getProducts().getContent().size());
         Assertions.assertEquals("test", shopfrontPage.getProducts().getContent().get(0).getTitle());
         Assertions.assertEquals(1d, shopfrontPage.getProducts().getContent().get(0).getPrice());
     }
 
     @Test
-    @Sql(statements = "insert into products(title, price) values('Майка', 1),('Кепка', 33)")
     void testShopfrontPageSearch() {
-        ItemsWithCartDto shopfrontPage = shopfrontService.getShopfrontPageWithCart(PageRequest.of(0,10, Sort.unsorted()), 0, "айка");
+        productRepository.saveAll(Arrays.asList(
+                Product.builder().title("Майка").price(1d).build(),
+                Product.builder().title("Кепка").price(33d).build())).subscribe();
+        ItemsWithCartDto shopfrontPage = shopfrontService.getShopfrontPageWithCart(PageRequest.of(0,10, Sort.unsorted()), 0, "айка").block();
         Assertions.assertEquals(1, shopfrontPage.getProducts().getContent().size());
         Assertions.assertEquals("Майка", shopfrontPage.getProducts().getContent().get(0).getTitle());
         Assertions.assertEquals(1d, shopfrontPage.getProducts().getContent().get(0).getPrice());

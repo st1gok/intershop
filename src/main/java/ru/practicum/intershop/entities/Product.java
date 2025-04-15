@@ -1,22 +1,19 @@
 package ru.practicum.intershop.entities;
 
-import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
 @Data
 @Table(name = "products")
+@Builder
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
     private String description;
     private Double price;
     private String imgPath;
 
-    public Product title(String title) {
-        this.title = title;
-        return this;
-    }
 }

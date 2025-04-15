@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>Витрина товаров</title>
 </head>
 
@@ -39,9 +40,9 @@
                         </select>
                     </p>
                     <p>
-                        <button th:if="${items.hasPrevious()}" name="page" th:value="${items.number}">&lt;</button>
+                        <button th:if="${items.hasPrevious()}" name="page" th:value="${items.number-1}">&lt;</button>
                         <span th:text="|Страница: ${items.number+1}|"></span>
-                        <button th:if="${items.hasNext()}" name="page" th:value="${items.number+2}">&gt;</button>
+                        <button th:if="${items.hasNext()}" name="page" th:value="${items.number+1}">&gt;</button>
                     </p>
                 </form>
             </td>

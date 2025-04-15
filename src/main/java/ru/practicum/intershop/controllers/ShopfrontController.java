@@ -1,13 +1,13 @@
 package ru.practicum.intershop.controllers;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.intershop.dto.ItemWithCartDto;
+import reactor.core.publisher.Mono;
 import ru.practicum.intershop.services.ShopfrontService;
 
 @Controller
@@ -22,32 +22,33 @@ public class ShopfrontController {
     }
 
     @GetMapping
-    public String getMainPage(Pageable pageable, @RequestParam(required = false, defaultValue = "") String search,  @CookieValue(defaultValue = "0") Long cartId, HttpServletResponse response, Model model) {
-        var content = shopfrontService.getShopfrontPageWithCart(pageable, cartId, search.trim());
-        Cookie browserSessionCookie = new Cookie("cartId",String.valueOf(content.getCartId()));
-        browserSessionCookie.setPath("/");
-        response.addCookie(browserSessionCookie);
-        model.addAttribute("items", content.getProducts());
-        model.addAttribute("paging", content.getProducts().getPageable());
-        model.addAttribute("search", search);
-        if (content.getProducts().getSort().isSorted()) {
-            model.addAttribute("sort", content.getProducts().getSort().get().findFirst().get().getProperty());
-        }
-        return "main";
-}
+    public Mono<String> getMainPage(Pageable pageable, @RequestParam(required = false, defaultValue = "") String search, @CookieValue(defaultValue = "0") Long cartId, ServerHttpResponse response, Model model) {
+        return shopfrontService.getShopfrontPageWithCart(pageable, cartId, search.trim())
+                .doOnNext(content -> {
+                            if ((cartId) == 0) {
+                                response.addCookie(ResponseCookie.from("cartId", String.valueOf(content.getCartId())).path("/").build());
+                            }
+                            model.addAttribute("items", content.getProducts());
+                            model.addAttribute("paging", content.getProducts().getPageable());
+                            model.addAttribute("search", search);
+                            if (content.getProducts().getSort().isSorted()) {
+                                model.addAttribute("sort", content.getProducts().getSort().get().findFirst().get().getProperty());
+                            }
+                        }
+                )
+                .map(main -> "main");
+    }
 
     @GetMapping("/{id}")
-    public String getItemPage(@PathVariable long id, @CookieValue(defaultValue = "0") Long cartId, Model model, HttpServletResponse response) {
-        ItemWithCartDto item = shopfrontService.getItemWithSelectedCount(id, cartId);
-        if (item.getProduct().isPresent()) {
-            Cookie browserSessionCookie = new Cookie("cartId",String.valueOf(item.getCartId()));
-            browserSessionCookie.setPath("/");
-            response.addCookie(browserSessionCookie);
-            model.addAttribute("item", item.getProduct().get());
-            return "item";
-        } else {
-            return "redirect:/main/items/";
-        }
+    public Mono<String> getItemPage(@PathVariable long id, @CookieValue(defaultValue = "0") Long cartId, ServerHttpResponse response, Model model) {
+        return shopfrontService.getItemWithSelectedCount(id, cartId)
+                .doOnNext(item -> {
+                    if ((cartId) == 0) {
+                        response.addCookie(ResponseCookie.from("cartId", String.valueOf(item.getCartId())).path("/").build());
+                    }
+                    model.addAttribute("item", item.getProduct().get());
+                })
+                .map(item -> "item").switchIfEmpty(Mono.just("redirect:/main/items"));
     }
 
 

@@ -12,9 +12,6 @@ import java.util.List;
 @Builder
 public class OrderDto {
     private Long id;
-    private List<CartItemDto> items = new ArrayList<>();
-
-    public Double getTotalSum() {
-        return items.stream().map(CartItemDto::getPrice).reduce(0.0, Double::sum);
-    }
+    private List<OrderItemDto> items = new ArrayList<>();
+    private Double totalSum = 0D;
 }
