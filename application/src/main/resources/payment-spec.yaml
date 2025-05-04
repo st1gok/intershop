@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: PaymentService
+  description: PaymentService
+  version: 1.0.0
+servers:
+  - url: 'http://payment:8223'
+paths:
+  /balance:
+    get:
+      summary: Получение информации о балансе
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentInfo'
+  /pay:
+    post:
+      summary: Оплата
+      requestBody:
+        description: Данные для создания нового пользователя
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInfo'
+      responses:
+        '200':
+          description: Успешный ответ
+        '400':
+          description: Ошибка при оплате
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    PaymentInfo:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Сумма
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Сообщение об ошибке
+
+  
