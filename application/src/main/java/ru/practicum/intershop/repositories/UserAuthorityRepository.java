@@ -3,9 +3,9 @@ package ru.practicum.intershop.repositories;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
-import ru.practicum.intershop.entities.CartItem;
+import ru.practicum.intershop.entities.UserAuthority;
 
 @Repository
-public interface CartItemsRepository extends R2dbcRepository<CartItem, Long> {
-    Flux<CartItem> findByUserId(Long userId);
+public interface UserAuthorityRepository extends R2dbcRepository<UserAuthority, Long> {
+    Flux<UserAuthority> findByUserId(Long userId);
 }

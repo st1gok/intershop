@@ -16,6 +16,9 @@
     <a href="/main/items" style="float:right;">
         <b>ГЛАВНАЯ &cudarrr;</b>
     </a>
+    <a href="/logout" style="float:right;">
+        <b>ВЫЙТИ &cudarrr;</b>
+    </a>
     <div style="width:70%;margin-left:auto;margin-right:auto;">
         <p>
             <img class="item-img" width="300" height="300" th:src="${(item.getImgPath() != null AND !#strings.isEmpty(item.getImgPath())) ? item.getImgPath() : '/img/not-image.png'}">

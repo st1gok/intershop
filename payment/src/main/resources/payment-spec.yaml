@@ -6,7 +6,7 @@ info:
 servers:
   - url: 'https'
 paths:
-  /getBalance:
+  /balance:
     # В данном случае operation — это метод get
     get:
       summary: Получение информации о балансе
@@ -51,4 +51,4 @@ components:
           type: string
           description: Сообщение об ошибке
 
-  
+

@@ -35,7 +35,7 @@ public class ShopfrontServiceDefault implements ShopfrontService {
     public Mono<ItemsWithCartDto> getShopfrontPageWithCart(Pageable pageable, long cartId, String search) {
         Flux<Product> products = productRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, pageable);
         Mono<Cart> cart = cartRepository.findById(cartId).switchIfEmpty(cartRepository.save(new Cart())).cache();
-        Flux<CartItem> cartItems = cartItemsRepository.findByCartId(cartId);
+        Flux<CartItem> cartItems = cartItemsRepository.findByUserId(cartId);
         Mono<Long> countProducts = this.productRepository.count();
         return Mono.zip(products.collectList(), cartItems.collectList(), countProducts, cart).flatMap(tuple -> {
             var items = mergeProductsWithCart(tuple.getT1(), tuple.getT2());
@@ -47,7 +47,7 @@ public class ShopfrontServiceDefault implements ShopfrontService {
     @Override
     public Mono<ItemWithCartDto> getItemWithSelectedCount(long productId, long cartId) {
         Mono<Product> product = productRepository.findById(productId);
-        Flux<CartItem> cartItems = cartItemsRepository.findByCartId(cartId);
+        Flux<CartItem> cartItems = cartItemsRepository.findByUserId(cartId);
         Mono<Cart> cart = cartRepository.findById(cartId).switchIfEmpty(cartRepository.save(new Cart())).cache();
         return Mono.zip(product, cartItems.collectList(), cart).map((tuple) -> ItemWithCartDto.builder()
                         .cartId(tuple.getT3().getId())

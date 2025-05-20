@@ -41,11 +41,11 @@ public class CartService {
     @Transactional
     public Mono<Void> changeCart(Long cartId, CartController.Action action, Long productId) {
         Mono<Cart> cartMono = cartRepository.findById(cartId).switchIfEmpty(cartRepository.save(new Cart()));
-        var cartItems = cartItemsRepository.findByCartId(cartId).collectList();
+        var cartItems = cartItemsRepository.findByUserId(cartId).collectList();
         return Mono.zip(cartItems, cartMono).flatMap(tuple -> {
             var cart = tuple.getT1();
             CartItem cartItem = cart.stream().filter(item -> item.getProductId().equals(productId)).findFirst().orElse(new CartItem());
-            cartItem.setCartId(cartId);
+            cartItem.setUserId(cartId);
             if (cartItem.getProductId() == null) {
                 if (CartController.Action.minus.equals(action)) {
                     return Mono.empty();
@@ -75,8 +75,8 @@ public class CartService {
         return paymentClient.getBalance();
     }
 
-    public Mono<CartDto> getCart(Long cartId) {
-        return cartItemsRepository.findByCartId(cartId).collectList()
+    public Mono<CartDto> getUserCart(Long userId) {
+        return cartItemsRepository.findByUserId(userId).collectList()
                 .flatMap(cartItems ->
                         Flux.fromIterable(cartItems)
                                 .flatMap((cartItem) -> productRepository.findById(cartItem.getProductId()))
@@ -93,7 +93,7 @@ public class CartService {
                                                     .orElse(new CartItem()).getCount())
                                             .build()).collect(Collectors.toList());
                                     var cartDto = new CartDto();
-                                    cartDto.setId(cartId);
+                                    cartDto.setId(userId);
                                     cartDto.setItems(cartItemsDto);
                                     return Mono.just(cartDto);
                                 })
@@ -104,10 +104,12 @@ public class CartService {
 
 
     @Transactional
-    public Mono<Long> buy(Long cartId) {
-        Mono<Order> newOrder = orderRepository.save(new Order());
-        Flux<CartItem> cart = cartItemsRepository.findByCartId(cartId);
-        return Mono.zip(newOrder, cart.collectList()).flatMap((tuple) ->
+    public Mono<Long> buyItemsFromUserCart(Long userId) {
+        Order newOrder = new Order();
+        newOrder.setUserId(userId);
+        Mono<Order> newOrderMono = orderRepository.save(newOrder);
+        Flux<CartItem> cart = cartItemsRepository.findByUserId(userId);
+        return Mono.zip(newOrderMono, cart.collectList()).flatMap((tuple) ->
                 Flux.fromIterable(tuple.getT2())
                         .flatMap((cartItem) -> productRepository.findById(cartItem.getProductId()))
                         .collectList()
@@ -126,6 +128,7 @@ public class CartService {
                                         .count(item.getCount())
                                         .build();
                             }).toList());
+                            order.setUserId(userId);
                             order.setTotalSum(order.getItems().stream().mapToDouble(item -> item.getCount() * item.getPrice()).sum());
                             return paymentClient.pay(order.getTotalSum())
                                     .then(orderItemsRepository.saveAll(order.getItems()).collectList())

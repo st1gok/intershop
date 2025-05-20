@@ -9,25 +9,25 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 import ru.practicum.intershop.services.ShopfrontService;
+import ru.practicum.intershop.services.UserService;
 
 @Controller
 @RequestMapping("/main/items")
 public class ShopfrontController {
 
     private final ShopfrontService shopfrontService;
+    private final UserService userService;
 
     @Autowired
-    public ShopfrontController(ShopfrontService shopfrontService) {
+    public ShopfrontController(ShopfrontService shopfrontService, UserService userService) {
         this.shopfrontService = shopfrontService;
+        this.userService = userService;
     }
 
     @GetMapping
     public Mono<String> getMainPage(Pageable pageable, @RequestParam(required = false, defaultValue = "") String search, @CookieValue(defaultValue = "0") Long cartId, ServerHttpResponse response, Model model) {
-        return shopfrontService.getShopfrontPageWithCart(pageable, cartId, search.trim())
+        return userService.getUserWithAuthorities().flatMap(user -> shopfrontService.getShopfrontPageWithCart(pageable, user.getId(), search.trim()))
                 .doOnNext(content -> {
-                            if ((cartId) == 0) {
-                                response.addCookie(ResponseCookie.from("cartId", String.valueOf(content.getCartId())).path("/").build());
-                            }
                             model.addAttribute("items", content.getProducts());
                             model.addAttribute("paging", content.getProducts().getPageable());
                             model.addAttribute("search", search);
@@ -41,7 +41,7 @@ public class ShopfrontController {
 
     @GetMapping("/{id}")
     public Mono<String> getItemPage(@PathVariable long id, @CookieValue(defaultValue = "0") Long cartId, ServerHttpResponse response, Model model) {
-        return shopfrontService.getItemWithSelectedCount(id, cartId)
+        return userService.getUserWithAuthorities().flatMap(user -> shopfrontService.getItemWithSelectedCount(id, user.getId()))
                 .doOnNext(item -> {
                     if ((cartId) == 0) {
                         response.addCookie(ResponseCookie.from("cartId", String.valueOf(item.getCartId())).path("/").build());

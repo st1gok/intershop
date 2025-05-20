@@ -11,7 +11,7 @@ public class CartItem {
 
     @Id
     private Long id;
-    private Long cartId;
+    private Long userId;
     private Long productId;
     private Integer count = 0;
 }

@@ -24,18 +24,21 @@ public class OrderServiceDefault implements OrderService {
     OrderRepository repository;
     OrderMapper orderMapper;
     private final OrderItemsRepository orderItemsRepository;
+    private final UserService userService;
 
     @Autowired
-    public OrderServiceDefault(OrderRepository repository, OrderMapper orderMapper, OrderItemsRepository orderItemsRepository) {
+    public OrderServiceDefault(OrderRepository repository, OrderMapper orderMapper,
+                               OrderItemsRepository orderItemsRepository,UserService userService) {
         this.repository = repository;
         this.orderMapper = orderMapper;
         this.orderItemsRepository = orderItemsRepository;
+        this.userService = userService;
     }
 
     @Override
     public Mono<Page<OrderDto>> getOrders(Pageable pageable) {
         Mono<Long> countOrders = this.repository.count().cache();
-        Flux<Order> orders = repository.findAllBy(pageable);
+        Flux<Order> orders = userService.getUserWithAuthorities().flatMapMany(user -> repository.findAllByUserId(user.getId(), pageable));
         return Mono.zip(orders.collectList(), countOrders).flatMap(tuple -> {
             var items = tuple.getT1().stream().map(orderMapper::toDto).toList();
             var pageItems = new PageImpl<>(items, pageable, tuple.getT2());
@@ -45,7 +48,7 @@ public class OrderServiceDefault implements OrderService {
 
     @Override
     public Mono<OrderDto> getOrder(Long id) {
-        Mono<Order> orderMono = repository.findById(id);
+        Mono<Order> orderMono = userService.getUserWithAuthorities().flatMap(user -> repository.findByIdAndUserId(id, user.getId()));
         Flux<OrderItem> orderItems = orderItemsRepository.findByOrderId(id);
         return Mono.zip(orderMono, orderItems.collectList()).flatMap(tuple -> {
             OrderDto orderDto = orderMapper.toDto(tuple.getT1());

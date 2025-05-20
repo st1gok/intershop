@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import ru.practicum.payment.server.api.GetBalanceApi;
+import ru.practicum.payment.server.api.BalanceApi;
 import ru.practicum.payment.server.api.PayApi;
 import ru.practicum.payment.server.domain.Error;
 import ru.practicum.payment.server.domain.PaymentInfo;
@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 @RequestMapping(value="/",
         produces = { "application/json" })
 
-public class PaymentController implements PayApi, GetBalanceApi {
+public class PaymentController implements PayApi, BalanceApi {
 
     private final PaymentService paymentService;
 
@@ -31,7 +31,7 @@ public class PaymentController implements PayApi, GetBalanceApi {
     }
 
     @Override
-    public Mono<PaymentInfo> getBalanceGet(ServerWebExchange exchange) {
+    public Mono<PaymentInfo> balanceGet(ServerWebExchange exchange) {
         return paymentService.getBalance().map(amount -> new PaymentInfo().amount(new BigDecimal(amount)));
     }
 

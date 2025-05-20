@@ -13,6 +13,7 @@ import java.util.List;
 public class Order {
     @Id
     private Long id;
+    private Long userId;
     private Double totalSum = 0d;
 
     @Transient

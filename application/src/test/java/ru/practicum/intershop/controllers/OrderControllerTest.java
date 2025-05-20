@@ -1,8 +1,11 @@
 package ru.practicum.intershop.controllers;
 
+import com.c4_soft.springaddons.security.oauth2.test.annotations.WithMockAuthentication;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.oauth2.client.reactive.ReactiveOAuth2ClientAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.reactive.ReactiveOAuth2ResourceServerAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +23,11 @@ import ru.practicum.intershop.services.OrderService;
 
 import java.util.Arrays;
 
-@WebFluxTest(OrderController.class)
+@WebFluxTest(controllers = OrderController.class,  excludeAutoConfiguration = {
+        ReactiveOAuth2ClientAutoConfiguration.class,
+        ReactiveOAuth2ResourceServerAutoConfiguration.class,
+})
+@WithMockAuthentication
 class OrderControllerTest {
 
     @Autowired
